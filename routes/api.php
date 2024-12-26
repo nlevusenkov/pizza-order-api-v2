@@ -8,7 +8,7 @@ use App\Http\Controllers\AdminController;
 
 // Маршруты аутентификации
 
-Route::post('/register', [AuthController::class, 'register']);
+Route::post('/register1', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout']);
 Route::middleware('auth:sanctum')->get('/check-token', function (Request $request) {
