@@ -14,7 +14,7 @@ class Characteristic extends Model
     // Связь с ассортиментом
     public function assortment()
     {
-        return $this->belongsTo(Assortment::class);
+        return $this->belongsTo(related: Assortment::class);
     }
 }
 

@@ -5,14 +5,14 @@ use App\Http\Middleware\RoleMiddleware;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\OrderController;
 
 // Маршруты аутентификации
 
-Route::post('/register1', [AuthController::class, 'register']);
+Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout']);
 Route::middleware('auth:sanctum')->get('/check-token', function (Request $request) {
-    //dd($request->user());
     return $request->user(); // Возвращает пользователя, если он аутентифицирован
 });
 
@@ -27,8 +27,11 @@ Route::middleware(['auth:sanctum', RoleMiddleware::class])->group(function () {
     Route::delete('/admin/users/{id}', [AdminController::class, 'deleteUser']);
 });
 
-
-
+Route::middleware('auth:sanctum')->post('/orders', [OrderController::class, 'createOrder']); //создание заказа
+Route::middleware(['auth:sanctum'])->put('/orders/{orderId}', [OrderController::class, 'updateOrder']);
+Route::middleware('auth:sanctum')->delete('/orders/{orderId}/cancel', [OrderController::class, 'cancelOrder']);
+Route::middleware('auth:sanctum')->put('/orders/{orderId}/status', [OrderController::class, 'changeOrderStatus']);
+Route::middleware('auth:sanctum')->get('/orders', [OrderController::class, 'GetOrders']);
 
 /*
 // Маршруты для официанта
