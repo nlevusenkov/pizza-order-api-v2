@@ -16,6 +16,7 @@ class Order extends Model
     {
         return $this->hasMany(OrderItem::class);
     }
+
     // Связь с Assortment
     public function assortments()
     {

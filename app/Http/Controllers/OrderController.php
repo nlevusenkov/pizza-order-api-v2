@@ -10,6 +10,20 @@ use Illuminate\Http\Request;
 
 class OrderController extends Controller
 {
+    public function getOrders(): JsonResponse
+    {
+        $userId = auth()->id();
+        \Log::info("Current user ID: " . $userId);
+
+        $orders = Order::with('items.assortment')
+            ->where('user_id', $userId)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json([
+            'orders' => $orders
+        ]);
+    }
     // создание заказа
     public function createOrder(Request $request): JsonResponse
     {
@@ -158,20 +172,31 @@ class OrderController extends Controller
         ]);
     }
 
-    public function getOrders(): JsonResponse
+    public function getOrders1(): JsonResponse
     {
-        // Получаем все заказы, которые принадлежат текущему пользователю
-        $orders = Order::where('user_id', auth()->id())->get();
+        try {
+            $orders = Order::with('items.assortment')
+                ->where('user_id', auth()->id())
+                ->orderBy('created_at', 'desc')
+                ->get();
 
-        // Если заказов нет
-        if ($orders->isEmpty()) {
-            return response()->json(['message' => 'У вас нет заказов'], 404);
+            if ($orders->isEmpty()) {
+                return response()->json([
+                    'message' => 'Заказы не найдены',
+                    'orders' => []  // Всегда возвращаем пустой массив вместо 404
+                ], 200);
+            }
+
+            return response()->json([
+                'orders' => $orders
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Ошибка при получении заказов',
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-        // Возвращаем список заказов
-        return response()->json([
-            'orders' => $orders
-        ]);
     }
 
     // Просмотр подробной информации о заказе

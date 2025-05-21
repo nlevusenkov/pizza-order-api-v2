@@ -10,11 +10,28 @@ use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
-    // Регистрация нового пользователя
 
+// Метод для создания ролей если их нет
+    private function ensureRolesExist()
+    {
+        $rolesData = [
+            ['name' => 'user'],
+            ['name' => 'admin'],
+            ['name' => 'waiter']
+        ];
+
+        foreach ($rolesData as $roleData) {
+            Role::firstOrCreate($roleData);
+        }
+    }
+
+// Регистрация пользователя
     public function register(Request $request)
     {
         try {
+            // Убеждаемся, что роли существуют
+            $this->ensureRolesExist();
+
             $request->validate([
                 'name' => 'required|string|max:100',
                 'email' => [
@@ -28,8 +45,6 @@ class AuthController extends Controller
                     }
                 ],
                 'password' => 'required|string|min:6|confirmed',
-                'roles' => 'required|array',
-                'roles.*' => 'string|exists:roles,name',
             ],
                 [
                     'name.required' => 'Имя обязательно для заполнения.',
@@ -50,9 +65,12 @@ class AuthController extends Controller
                 'password' => Hash::make($request->password),
             ]);
 
-            // Присвоение ролей
-            $roles = Role::whereIn('name', $request->roles)->get();
-            $user->roles()->attach($roles);
+            // Автоматическое присвоение роли "user"
+            $userRole = Role::where('name', 'user')->first();
+            if ($userRole) {
+                // Используем role_id для привязки
+                $user->roles()->attach($userRole->id);
+            }
 
             return response()->json([
                 'result' => 201,
@@ -66,11 +84,34 @@ class AuthController extends Controller
                 'message' => 'Ошибка валидации данных',
                 'errors' => $e->errors()
             ], 422);
-
         }
     }
 
+// Метод назначения роли
+    public function assignRole(Request $request)
+    {
+        // Убеждаемся, что роли существуют
+        $this->ensureRolesExist();
 
+        $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'role' => 'required|exists:roles,name'
+        ]);
+
+        $user = User::findOrFail($request->user_id);
+        $role = Role::where('name', $request->role)->first();
+
+        // Удаление предыдущих ролей
+        $user->roles()->detach();
+
+        // Назначение новой роли используя role_id
+        $user->roles()->attach($role->id);
+
+        return response()->json([
+            'message' => 'Роль успешно назначена',
+            'user' => $user->load('roles')
+        ], 200);
+    }
     // Вход пользователя
     public function login(Request $request)
     {
@@ -116,5 +157,7 @@ class AuthController extends Controller
             'message' => 'Успешный выход',
         ], 200);
     }
+
+
 }
 

@@ -15,7 +15,7 @@ Route::post('/logout', [AuthController::class, 'logout']);
 Route::middleware('auth:sanctum')->get('/check-token', function (Request $request) {
     return $request->user(); // Возвращает пользователя, если он аутентифицирован
 });
-
+Route::post('/users/assign-role', [AuthController::class, 'assignRole']);
 Route::middleware(['auth:sanctum', RoleMiddleware::class])->group(function () {
     Route::get('/admin/dashboard', [AdminController::class, 'dashboard']);
     Route::post('/assortment', [AdminController::class, 'addAssortment']);
